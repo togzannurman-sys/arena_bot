@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Анкета волонтёра Арены</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#2F5BD8; --blue-dark:#1E3FA0; --blue-soft:#EAF0FF;
+    --bg:#F3F4F7; --card:#FFFFFF; --line:#DDE1EA; --line-soft:#EEF0F4;
+    --text:#15171C; --muted:#5B6170; --muted2:#8A909C;
+    --warn-bg:#FFF4E5; --warn:#6B3D00; --ok-bg:#E5F5EA; --ok:#1F7A3E; --err:#B42318;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,system-ui,-apple-system,sans-serif;font-size:15px}
+  button,input,textarea{font:inherit;color:inherit}
+  .app{max-width:560px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+  .top{background:var(--card);padding:16px 20px 14px;display:flex;flex-direction:column;gap:10px;position:sticky;top:0;z-index:5;box-shadow:0 1px 0 var(--line-soft)}
+  .top-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .top-title{font-weight:800;font-size:18px}
+  .top-step{font-size:13px;color:var(--muted);font-weight:600}
+  .back{display:flex;align-items:center;gap:6px;border:none;background:none;padding:0;font-weight:800;font-size:17px;cursor:pointer;min-height:44px}
+  .bars{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .bars span{height:5px;border-radius:3px;background:var(--line)}
+  .bars span.on{background:var(--blue)}
+  .crumbs{font-size:13px;color:var(--muted)}
+  .crumbs b{color:var(--text)}
+  main{padding:16px;display:flex;flex-direction:column;gap:14px;flex:1}
+  .card{background:var(--card);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:14px}
+  .card h2{margin:0;font-size:16px;font-weight:800}
+  .card .sub{font-size:13px;line-height:1.5;color:#4A4F5B;margin-top:-6px}
+  .row-between{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .opt{font-size:12px;color:var(--muted)}
+  label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600}
+  .inp{height:46px;border-radius:12px;border:1px solid var(--line);background:#F7F8FA;padding:0 14px;font-weight:500;font-size:16px;outline:none;width:100%}
+  .inp:focus{border-color:var(--blue);background:#fff}
+  textarea.inp{height:96px;padding:12px 14px;resize:none;line-height:1.4;font-size:15px}
+  .hint{font-weight:500;color:var(--muted);font-size:12px}
+  .err{font-weight:600;color:var(--err);font-size:12px;display:none}
+  .bad .err{display:block}
+  .bad .inp{border-color:var(--err)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .langs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .lang{border:1.5px solid var(--line);background:#fff;border-radius:16px;display:flex;flex-direction:column}
+  .lang.on{grid-column:1/-1;border:2px solid var(--blue);background:#F4F7FF}
+  .lang-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:0 16px;min-height:56px;border:none;background:none;width:100%;text-align:left;cursor:pointer;font-weight:700;font-size:15px}
+  .lang .box{width:26px;height:26px}
+  .lang.on .box{background:var(--blue);border-color:var(--blue)}
+  .levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:0 12px 14px}
+  .levels .chip{min-height:40px;border-radius:20px;font-size:13px;padding:0 4px;justify-content:center}
+  .levels .chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .lang .lang-other{padding:0 16px 12px}
+  .chip{min-height:42px;padding:0 14px;border-radius:21px;border:1.5px solid var(--line);background:#fff;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .chip.on{border-color:var(--blue);background:var(--blue-soft);color:var(--blue-dark);font-weight:700}
+  .chip .num{width:28px;height:28px;border-radius:14px;background:var(--blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:13px;margin-left:-8px}
+  .chip.any{width:100%;justify-content:center;border-style:dashed;border-color:#9AA3B5;font-weight:700;border-radius:14px;min-height:46px}
+  .chip.any.on{border-style:solid;border-color:var(--blue)}
+  .grp{font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--muted)}
+  .seg{display:grid;gap:8px}
+  .seg .chip{justify-content:center;border-radius:12px;min-height:44px;padding:0 6px}
+  .sizes{grid-template-columns:repeat(4,1fr)}
+  .two{grid-template-columns:repeat(2,1fr)}
+  .em-head{display:flex;align-items:center;gap:10px}
+  .em-ico{width:36px;height:36px;border-radius:10px;background:#FCEDE4;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .consent{display:flex;gap:12px;align-items:flex-start;font-size:13px;line-height:1.45;color:#3A3F4B;padding:0 4px;cursor:pointer}
+  .consent input{width:22px;height:22px;margin:0;accent-color:var(--blue);flex-shrink:0}
+  .consent.bad{color:var(--err)}
+  .note{border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.45}
+  .note.warn{background:var(--warn-bg);color:var(--warn)}
+  .note.blue{background:var(--blue-soft);color:var(--blue-dark)}
+  .note.gray{background:var(--bg);color:#3A3F4B}
+  .quick{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .quick button{height:46px;border-radius:14px;border:none;background:#fff;font-weight:800;font-size:14px;cursor:pointer;color:var(--blue)}
+  .quick button.gray{color:var(--muted);font-weight:700}
+  .count-badge{font-size:13px;font-weight:700;color:var(--blue-dark);background:var(--blue-soft);padding:4px 10px;border-radius:10px;white-space:nowrap}
+  .days{display:flex;flex-direction:column;gap:8px}
+  .day{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-radius:16px;background:#fff;border:2px solid #E6E8EE;cursor:pointer;width:100%;text-align:left}
+  .day.on{border-color:var(--blue);background:#F4F7FF}
+  .day b{font-size:16px;display:block}
+  .day small{font-size:13px;color:var(--muted)}
+  .box{width:26px;height:26px;border-radius:8px;border:2px solid #C9CEDA;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff}
+  .day.on .box{background:var(--blue);border-color:var(--blue)}
+  .foot{background:#fff;padding:12px 16px calc(16px + env(safe-area-inset-bottom));border-top:1px solid #E6E8EE;position:sticky;bottom:0;display:flex;flex-direction:column;gap:10px;z-index:5}
+  .foot-info{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .foot-info b{font-size:15px}
+  .pill-ok{font-size:12px;font-weight:800;color:var(--ok);background:var(--ok-bg);padding:4px 10px;border-radius:10px}
+  .pill-warn{font-size:12px;font-weight:800;color:var(--warn);background:var(--warn-bg);padding:4px 10px;border-radius:10px}
+  .btns{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+  .btns.one{grid-template-columns:1fr}
+  .btn{height:52px;border-radius:14px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn.ghost{background:#EEF0F4;color:var(--text);font-weight:700}
+  .btn.outline{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
+  .btn[disabled]{opacity:.6}
+  .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px 24px;text-align:center}
+  .spinner{width:36px;height:36px;border-radius:50%;border:4px solid var(--blue-soft);border-top-color:var(--blue);animation:sp 0.9s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .hello{display:flex;flex-direction:column;gap:4px;padding:8px 4px 0}
+  .hello small{font-size:14px;color:var(--muted)}
+  .hello b{font-size:24px;font-weight:800}
+  .status{background:var(--blue);color:#fff;border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px}
+  .status .k{font-size:12px;font-weight:700;opacity:.85;letter-spacing:.04em}
+  .status .t{font-weight:800;font-size:18px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .stats div{background:rgba(255,255,255,.14);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px}
+  .stats b{font-size:20px}
+  .stats span{font-size:12px}
+  .menu{background:#fff;border-radius:20px;display:flex;flex-direction:column;overflow:hidden}
+  .menu button{display:flex;justify-content:space-between;align-items:center;padding:0 18px;min-height:62px;border:none;background:#fff;border-bottom:1px solid var(--line-soft);text-align:left;cursor:pointer;width:100%}
+  .menu button:last-child{border-bottom:none}
+  .menu b{font-size:15px;display:block}
+  .menu small{font-size:12px;color:var(--muted)}
+  .info p{margin:0;font-size:14px;line-height:1.55}
+  .done-ico{width:72px;height:72px;border-radius:36px;background:var(--ok-bg);display:flex;align-items:center;justify-content:center}
+  .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#15171C;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:90%}
+  .toast.show{opacity:1}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ НАСТРОЙКИ ============
+   Адрес n8n бот передаёт сам (параметр ?api=...).
+   Заполнять API_URL нужно, только если анкета открывается без него. */
+const API_URL = '';
+const EVENT_NAME = 'Чемпионат мира по борьбе';
+/* =================================== */
+
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+const params = new URLSearchParams(location.search);
+const API = params.get('api') || API_URL;
+
+const DAYS = [
+  {key:'24 окт', date:'24 октября', wd:'суббота'},
+  {key:'25 окт', date:'25 октября', wd:'воскресенье'},
+  {key:'26 окт', date:'26 октября', wd:'понедельник'},
+  {key:'27 окт', date:'27 октября', wd:'вторник'},
+  {key:'28 окт', date:'28 октября', wd:'среда'},
+  {key:'29 окт', date:'29 октября', wd:'четверг'},
+  {key:'30 окт', date:'30 октября', wd:'пятница'},
+  {key:'31 окт', date:'31 октября', wd:'суббота'},
+  {key:'1 ноя',  date:'1 ноября',  wd:'воскресенье'}
+];
+const LANGS = ['Қазақша','Русский','English','中文','العربية','한국어','日本語','Другой'];
+const LANG_LABEL = {'Қазақша':'Казахский','Русский':'Русский','English':'Английский','中文':'Китайский','العربية':'Арабский','한국어':'Корейский','日本語':'Японский','Другой':'Другой'};
+const LEVELS = ['Базовый','Разговорный','Свободный'];
+const SIZES = ['S','M','L','XL'];
+const POS_GROUPS = [
+  {title:'НА АРЕНЕ', items:['Field of play','Warm-up area','Допинг-контроль (18+)','Межзонные']},
+  {title:'ЗРИТЕЛИ И ГОСТИ', items:['Вход / проверка билетов','Навигация','Трибуны','VIP-зоны','Гардероб']},
+  {title:'ОБЕСПЕЧЕНИЕ', items:['Аккредитация','Транспорт','Питание','Медиа']}
+];
+const ANY_POS = 'Любая, где нужнее';
+
+let D = emptyData();
+let registered = false;
+let view = 'loading';      // loading | nottg | error | wizard | edit | menu | info | done
+let step = 1;
+let editSection = 1;
+let saving = false;
+let errors = {};
+
+function emptyData(){
+  return {fio:'',phone:'',birth:'',address:'',langs:[],langLevel:{},langOther:'',size:'',
+    em_name:'',em_rel:'',em_phone:'',consent:false,
+    positions:[],exp:'',exp_where:'',days:[],notes:''};
+}
+function pl(n,a,b,c){n=Math.abs(n)%100;const m=n%10;if(n>10&&n<20)return c;if(m>1&&m<5)return b;if(m===1)return a;return c;}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+const CHECK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+const CHEV = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA3B5" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>';
+const BACK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>';
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200);}
+function haptic(type){try{ if(tg&&tg.HapticFeedback){ type==='light'?tg.HapticFeedback.selectionChanged():tg.HapticFeedback.notificationOccurred(type);} }catch(e){}}
+
+/* ---------- форматирование ---------- */
+function fmtPhone(v){
+  const s=String(v||'').trim();
+  let d=s.replace(/\D/g,'');
+  if(!d) return '';
+  let local;
+  if(s.startsWith('+7')) local=d.slice(1);
+  else if(d.length>=11 && (d[0]==='7'||d[0]==='8')) local=d.slice(1);
+  else if(d[0]==='8') local=d.slice(1);
+  else local=d;
+  d=('7'+local).slice(0,11);
+  if(d.length===1) return '+7 ';
+  let r='+7';
+  if(d.length>1) r+=' '+d.slice(1,4);
+  if(d.length>4) r+=' '+d.slice(4,7);
+  if(d.length>7) r+=' '+d.slice(7,9);
+  if(d.length>9) r+=' '+d.slice(9,11);
+  return r;
+}
+function phoneOk(v){return String(v||'').replace(/\D/g,'').length===11;}
+function fmtBirth(v){
+  let d=String(v||'').replace(/\D/g,'').slice(0,8);
+  if(d.length>4) return d.slice(0,2)+'.'+d.slice(2,4)+'.'+d.slice(4);
+  if(d.length>2) return d.slice(0,2)+'.'+d.slice(2);
+  return d;
+}
+function birthOk(v){
+  const m=/^(\d{2})\.(\d{2})\.(\d{4})$/.exec(v||''); if(!m) return false;
+  const dd=+m[1], mm=+m[2], yy=+m[3]; const dt=new Date(yy,mm-1,dd);
+  return dt.getFullYear()===yy && dt.getMonth()===mm-1 && dt.getDate()===dd && yy>1940 && yy<2016;
+}
+
+/* ---------- проверка шагов ---------- */
+function validate(s){
+  const e={};
+  if(s===1){
+    if(D.fio.trim().split(/\s+/).filter(Boolean).length<2) e.fio='Укажите фамилию и имя полностью';
+    if(!phoneOk(D.phone)) e.phone='Введите номер полностью';
+    if(!birthOk(D.birth)) e.birth='Формат: ДД.ММ.ГГГГ';
+    if(D.address.trim().length<4) e.address='Укажите адрес';
+    if(!D.langs.length) e.langs='Выберите хотя бы один язык';
+    if(D.langs.includes('Другой') && !D.langOther.trim()) e.langOther='Напишите, какой язык';
+    if(!D.size) e.size='Выберите размер';
+    if(D.em_name.trim().length<2) e.em_name='Укажите имя';
+    if(D.em_rel.trim().length<2) e.em_rel='Укажите, кем приходится';
+    if(!phoneOk(D.em_phone)) e.em_phone='Введите номер полностью';
+    if(!D.consent) e.consent='Нужно согласие';
+  }
+  if(s===2){
+    if(!D.exp) e.exp='Выберите вариант';
+    if(D.exp==='Да' && D.exp_where.trim().length<3) e.exp_where='Коротко: мероприятие и позиция';
+  }
+  if(s===3){
+    if(!D.days.length) e.days='Отметьте хотя бы один день';
+  }
+  return e;
+}
+
+/* ---------- отрисовка ---------- */
+function render(){
+  const app=document.getElementById('app');
+  if(view==='loading'){ app.innerHTML='<div class="center"><div class="spinner"></div><div style="color:var(--muted)">Загружаем анкету…</div></div>'; return; }
+  if(view==='nottg'){ app.innerHTML='<div class="center"><h2 style="margin:0">Откройте анкету через бота</h2><div style="color:var(--muted);line-height:1.5">Эта страница работает только внутри Telegram. Вернитесь в бот и нажмите кнопку «Анкета».</div></div>'; return; }
+  if(view==='error'){ app.innerHTML='<div class="center"><h2 style="margin:0">Не удалось загрузить</h2><div style="color:var(--muted);line-height:1.5">Проверьте интернет и попробуйте ещё раз.</div><button class="btn" style="width:100%;max-width:280px" onclick="init()">Повторить</button></div>'; return; }
+  if(view==='menu') return renderMenu(app);
+  if(view==='info') return renderInfo(app);
+  if(view==='done') return renderDone(app);
+  if(view==='wizard') return renderWizard(app);
+  if(view==='edit') return renderEdit(app);
+}
+
+function header(title,right){return '<div class="top"><div class="top-row"><div class="top-title">'+title+'</div>'+(right?'<div class="top-step">'+right+'</div>':'')+'</div>';}
+function backHeader(title){return '<div class="top"><div class="top-row"><button class="back" onclick="go(\'menu\')">'+BACK+esc(title)+'</button></div></div>';}
+
+function renderWizard(app){
+  const names=['О вас','Позиции','Доступность'];
+  let h=header('Анкета волонтёра','Шаг '+step+' из 3');
+  h+='<div class="bars">'+[1,2,3].map(i=>'<span class="'+(i<=step?'on':'')+'"></span>').join('')+'</div>';
+  h+='<div class="crumbs">'+names.map((n,i)=>i+1===step?'<b>'+n+'</b>':n).join(' · ')+'</div></div>';
+  h+='<main>'+section(step)+'</main>';
+  h+='<div class="foot">'+(step===3?daysFootInfo():'')+'<div class="btns'+(step===1?' one':'')+'">';
+  if(step>1) h+='<button class="btn ghost" onclick="prevStep()">Назад</button>';
+  h+='<button class="btn" id="nextBtn" onclick="nextStep()" '+(saving?'disabled':'')+'>'+(step===1?'Далее: позиции':step===2?'Далее: доступность':(saving?'Отправляем…':'Отправить анкету'))+'</button>';
+  h+='</div></div>';
+  app.innerHTML=h; bindInputs();
+}
+
+function renderEdit(app){
+  const titles={1:'Мои данные',2:'Желаемые позиции',3:'Моя доступность'};
+  let h=backHeader(titles[editSection]);
+  h+='<main>'+section(editSection)+'</main>';
+  h+='<div class="foot">'+(editSection===3?daysFootInfo():'')+'<div class="btns one"><button class="btn" onclick="saveEdit()" '+(saving?'disabled':'')+'>'+(saving?'Сохраняем…':'Сохранить изменения')+'</button></div></div>';
+  app.innerHTML=h; bindInputs();
+}
+
+function section(s){ return s===1?sec1():s===2?sec2():sec3(); }
+
+function field(key,label,ph,opts){
+  opts=opts||{};
+  return '<label class="f'+(errors[key]?' bad':'')+'" data-k="'+key+'">'+label+
+    '<input class="inp" data-bind="'+key+'" value="'+esc(D[key])+'" placeholder="'+esc(ph)+'"'+(opts.mode?' inputmode="'+opts.mode+'"':'')+(opts.ac?' autocomplete="'+opts.ac+'"':'')+'>'+
+    (opts.hint?'<span class="hint">'+opts.hint+'</span>':'')+'<span class="err">'+esc(errors[key]||'')+'</span></label>';
+}
+function errLine(key){return errors[key]?'<div class="err" style="display:block">'+esc(errors[key])+'</div>':'';}
+
+function sec1(){
+  let h='<div class="card"><h2>Основные данные</h2>';
+  h+=field('fio','ФИО полностью (как в удостоверении) *','Фамилия Имя Отчество',{ac:'name'});
+  h+=field('phone','Номер телефона *','+7 7__ ___ __ __',{mode:'tel',ac:'tel'});
+  h+=field('birth','Дата рождения *','ДД.ММ.ГГГГ',{mode:'numeric'});
+  h+=field('address','Адрес проживания *','Район, улица, дом');
+  h+='</div>';
+  h+='<div class="card"><h2>Языки, которыми вы владеете *</h2><div class="sub">Можно выбрать несколько. Уровень — по желанию.</div><div class="langs">'+
+    LANGS.map(l=>{
+      const on=D.langs.includes(l);
+      let c='<div class="lang'+(on?' on':'')+'"><button class="lang-head" onclick="toggleLang(\''+l+'\')"><span>'+LANG_LABEL[l]+'</span><span class="box">'+(on?CHECK:'')+'</span></button>';
+      if(on){
+        if(l==='Другой') c+='<div class="lang-other">'+field('langOther','Какой язык? *','Например: Турецкий')+'</div>';
+        c+='<div class="levels">'+LEVELS.map(v=>'<button class="chip'+((D.langLevel||{})[l]===v?' on':'')+'" onclick="setLevel(\''+l+'\',\''+v+'\')">'+v+'</button>').join('')+'</div>';
+      }
+      return c+'</div>';
+    }).join('')+'</div>';
+  h+=errLine('langs')+'</div>';
+  h+='<div class="card"><h2>Размер одежды (для формы) *</h2><div class="seg sizes">'+
+    SIZES.map(s=>'<button class="chip'+(D.size===s?' on':'')+'" onclick="setVal(\'size\',\''+s+'\')">'+s+'</button>').join('')+'</div>'+errLine('size')+'</div>';
+  h+='<div class="card"><div class="em-head"><div class="em-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B5501E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></div><h2 style="font-size:15px">Контакт на случай экстренной ситуации</h2></div>';
+  h+=field('em_name','Имя *','Например: Айгерим');
+  h+=field('em_rel','Кем приходится *','Мама, брат, друг…');
+  h+=field('em_phone','Номер телефона *','+7 7__ ___ __ __',{mode:'tel'});
+  h+='</div>';
+  h+='<label class="consent'+(errors.consent?' bad':'')+'"><input type="checkbox" '+(D.consent?'checked':'')+' onchange="D.consent=this.checked;clearErr(\'consent\')">Я согласен(на) на обработку персональных данных для организации волонтёрской работы на чемпионате *</label>';
+  return h;
+}
+
+function posChip(p){
+  const i=D.positions.indexOf(p);
+  return '<button class="chip'+(i>=0?' on':'')+'" onclick="togglePos(\''+p.replace(/'/g,"\\'")+'\')">'+(i>=0?'<span class="num">'+(i+1)+'</span>':'')+esc(p)+'</button>';
+}
+function sec2(){
+  let h='<div class="card" style="gap:8px"><div class="row-between"><h2>Желаемые позиции</h2><span class="count-badge">'+D.positions.length+' из 3</span></div>';
+  h+='<div class="sub" style="margin-top:0">Выберите до 3 позиций в порядке желания. Это <b>не означает</b>, что вы точно попадёте на выбранную позицию — мы смотрим, кто куда хочет, и максимально постараемся учесть ваши пожелания.</div></div>';
+  h+='<div class="card" style="gap:12px">';
+  POS_GROUPS.forEach((g,gi)=>{ h+='<div class="grp"'+(gi?' style="margin-top:6px"':'')+'>'+g.title+'</div><div class="chips">'+g.items.map(posChip).join('')+'</div>'; });
+  const ai=D.positions.indexOf(ANY_POS);
+  h+='<div style="height:1px;background:#E6E8EE;margin:6px 0"></div><button class="chip any'+(ai>=0?' on':'')+'" onclick="togglePos(ANY_POS)">'+(ai>=0?'<span class="num" style="margin-left:0">'+(ai+1)+'</span>':'')+ANY_POS+'</button></div>';
+  h+='<div class="card" style="gap:10px"><h2 style="font-size:15px">Был ли опыт волонтёрства? *</h2><div class="seg two">'+
+    ['Да','Нет, впервые'].map(v=>{const val=v==='Да'?'Да':'Нет';return '<button class="chip'+(D.exp===val?' on':'')+'" onclick="setVal(\'exp\',\''+val+'\')">'+v+'</button>';}).join('')+'</div>'+errLine('exp');
+  if(D.exp==='Да'){
+    h+='<div class="sub" style="margin-top:0">Напишите <b>коротко и чётко</b>: мероприятие и позицию, на которой вы были.</div>';
+    h+=field('exp_where','','Swimming World Cup — навигация');
+  }
+  h+='</div>';
+  return h;
+}
+
+function sec3(){
+  let h='<div class="card" style="gap:10px"><h2>Моя доступность</h2><div class="sub" style="margin-top:0">Отметьте дни <b>официальных соревнований</b>, когда вы сможете работать <b>весь день, с 07:00 до 20:00</b>.</div>';
+  h+='<div class="note warn"><b>Минимум 4 дня</b> — чтобы получить благодарственное письмо, форму и аккредитацию.</div>';
+  h+='<div class="note blue"><b>В приоритете</b> волонтёры, которые смогут выйти во все дни соревнований.</div>';
+  h+='<div class="note gray">Это пока ориентировочный график: мы смотрим, сколько людей сможет выйти в каждый день. Но отмечайте только те дни, когда вы будете <b>на 100%</b>. Итоговое расписание пришлёт координатор.</div></div>';
+  h+='<div class="quick"><button onclick="allDays()">Выбрать все дни</button><button class="gray" onclick="clearDays()">Очистить</button></div>';
+  h+='<div class="row-between" style="padding:0 4px"><b style="font-size:15px">24 октября — 1 ноября</b><span class="count-badge" id="dayBadge">Выбрано: '+D.days.length+' из 9</span></div>';
+  h+='<div class="days">'+DAYS.map(d=>{const on=D.days.includes(d.key);return '<button class="day'+(on?' on':'')+'" data-day="'+d.key+'" onclick="toggleDay(\''+d.key+'\')"><span><b>'+d.date+'</b><small>'+d.wd+' · весь день, 07:00–20:00</small></span><span class="box">'+(on?CHECK:'')+'</span></button>';}).join('')+'</div>'+errLine('days');
+  h+='<div class="card" style="gap:10px"><div class="row-between"><h2 style="font-size:15px">Есть особые обстоятельства?</h2><span class="opt">необязательно</span></div>';
+  h+='<div class="sub" style="margin-top:0">Если в какой-то день вам нужно ненадолго отойти, прийти позже или уйти раньше — напишите, в какой день и в какое время.</div>';
+  h+='<textarea class="inp" data-bind="notes" placeholder="27 октября могу весь день, но с 10:00 до 12:00 сдаю экзамен в университете — потом сразу приеду">'+esc(D.notes)+'</textarea></div>';
+  return h;
+}
+function daysFootInfo(){
+  const n=D.days.length;
+  return '<div class="foot-info" id="footInfo"><b>Выбрано дней: '+n+'</b>'+(n>=4?'<span class="pill-ok">мин. 4 дня ✓</span>':'<span class="pill-warn">нужно минимум 4</span>')+'</div>';
+}
+
+function renderMenu(app){
+  const first=(D.fio.trim().split(/\s+/)[1]||D.fio.trim().split(/\s+/)[0]||'');
+  const pos=D.positions.length?D.positions.join(', '):'не выбраны';
+  let h='<main style="padding-top:20px"><div class="hello"><small>Здравствуйте,</small><b>'+esc(first)+'</b></div>';
+  h+='<div class="status"><div class="k">ВАША АНКЕТА</div><div class="t">Отправлена · ждёт распределения</div><div class="stats">'+
+     '<div><b>'+D.days.length+'</b><span>'+pl(D.days.length,'день','дня','дней')+' из 9</span></div><div><b>'+D.positions.length+'</b><span>'+pl(D.positions.length,'позиция','позиции','позиций')+'</span></div><div><b>'+D.langs.length+'</b><span>'+pl(D.langs.length,'язык','языка','языков')+'</span></div></div></div>';
+  h+='<div class="menu">'+
+    '<button onclick="openEdit(1)"><span><b>Мои данные</b><small>ФИО, телефон, экстренный контакт</small></span>'+CHEV+'</button>'+
+    '<button onclick="openEdit(2)"><span><b>Желаемые позиции</b><small>'+esc(pos)+'</small></span>'+CHEV+'</button>'+
+    '<button onclick="openEdit(3)"><span><b>Моя доступность</b><small>Дни 24.10 – 01.11</small></span>'+CHEV+'</button>'+
+    '<button onclick="go(\'info\')"><span><b>Важная информация</b><small>Даты, форма, правила</small></span>'+CHEV+'</button></div>';
+  h+='<div style="font-size:12px;color:var(--muted);text-align:center;line-height:1.5;padding:0 12px">Изменились планы? Обновите анкету и обязательно сразу сообщите координатору.</div></main>';
+  app.innerHTML=h;
+}
+
+function renderInfo(app){
+  let h=backHeader('Важная информация')+'<main><div class="card info">';
+  h+='<p><b>'+EVENT_NAME+'</b> — официальные дни соревнований <b>24 октября – 1 ноября</b>.</p>';
+  h+='<p>Работа на Арене — <b>полный день, с 07:00 до 20:00</b>. Точный график и позицию пришлёт координатор.</p>';
+  h+='<p>Для благодарственного письма, формы и аккредитации нужно отработать <b>минимум 4 дня</b>.</p>';
+  h+='<p>В приоритете — волонтёры, которые смогут выйти <b>во все дни</b> соревнований.</p>';
+  h+='<p>Выбранные позиции — это ваши пожелания: мы постараемся их учесть, но не гарантируем.</p>';
+  h+='<p>Отмечайте только те дни, когда вы будете на 100%. Если планы изменятся — обновите анкету и сразу сообщите координатору: от этого зависит расписание всей команды.</p>';
+  h+='</div></main>';
+  app.innerHTML=h;
+}
+
+function renderDone(app){
+  app.innerHTML='<div class="center"><div class="done-ico"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1F7A3E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>'+
+   '<h2 style="margin:0">Анкета отправлена!</h2><div style="color:var(--muted);line-height:1.5">Спасибо! Копия анкеты придёт сообщением в бот.<br>Если планы изменятся — откройте анкету снова и обновите её.</div>'+
+   '<button class="btn" style="width:100%;max-width:280px" onclick="closeApp()">Закрыть</button>'+
+   '<button class="btn ghost" style="width:100%;max-width:280px" onclick="go(\'menu\')">Открыть меню анкеты</button></div>';
+}
+
+/* ---------- ввод ---------- */
+function bindInputs(){
+  document.querySelectorAll('[data-bind]').forEach(el=>{
+    el.addEventListener('input',()=>{
+      const k=el.dataset.bind; let v=el.value;
+      if(k==='phone'||k==='em_phone'){ v=fmtPhone(v); el.value=v; }
+      if(k==='birth'){ v=fmtBirth(v); el.value=v; }
+      D[k]=v;
+      if(errors[k]){ delete errors[k]; const l=el.closest('.bad'); if(l) l.classList.remove('bad'); }
+    });
+  });
+}
+function clearErr(k){ if(errors[k]){ delete errors[k]; render(); } }
+function setVal(k,v){ D[k]=v; delete errors[k]; haptic('light'); render(); }
+function setLevel(l,v){
+  D.langLevel=D.langLevel||{};
+  D.langLevel[l]=(D.langLevel[l]===v)?'':v;
+  haptic('light'); render();
+}
+function toggleLang(l){
+  D.langLevel=D.langLevel||{};
+  const i=D.langs.indexOf(l);
+  if(i>=0){ D.langs.splice(i,1); delete D.langLevel[l]; } else D.langs.push(l);
+  D.langs.sort((a,b)=>LANGS.indexOf(a)-LANGS.indexOf(b));
+  if(!D.langs.includes('Другой')) D.langOther='';
+  delete errors.langs; haptic('light'); render();
+}
+function togglePos(p){
+  const i=D.positions.indexOf(p);
+  if(i>=0) D.positions.splice(i,1);
+  else { if(D.positions.length>=3){ toast('Можно выбрать не больше 3 позиций'); haptic('warning'); return; } D.positions.push(p); }
+  haptic('light'); render();
+}
+function toggleDay(k){
+  const i=D.days.indexOf(k); if(i>=0) D.days.splice(i,1); else D.days.push(k);
+  D.days.sort((a,b)=>DAYS.findIndex(d=>d.key===a)-DAYS.findIndex(d=>d.key===b));
+  delete errors.days; haptic('light'); render();
+}
+function allDays(){ D.days=DAYS.map(d=>d.key); delete errors.days; haptic('light'); render(); }
+function clearDays(){ D.days=[]; haptic('light'); render(); }
+
+function showErrors(e){
+  errors=e; render(); haptic('error');
+  const first=document.querySelector('.bad, .err[style*="block"]');
+  if(first) first.scrollIntoView({behavior:'smooth',block:'center'});
+  toast('Проверьте отмеченные поля');
+}
+function nextStep(){
+  const e=validate(step);
+  if(Object.keys(e).length) return showErrors(e);
+  errors={};
+  if(step<3){ step++; render(); window.scrollTo(0,0); return; }
+  confirmFewDays(()=>submit(true));
+}
+function prevStep(){ errors={}; if(step>1){ step--; render(); window.scrollTo(0,0); } }
+function go(v){ errors={}; view=v; render(); window.scrollTo(0,0); }
+function openEdit(s){ editSection=s; errors={}; view='edit'; render(); window.scrollTo(0,0); }
+function saveEdit(){
+  const e=validate(editSection);
+  if(Object.keys(e).length) return showErrors(e);
+  const run=()=>submit(false);
+  editSection===3?confirmFewDays(run):run();
+}
+function confirmFewDays(cb){
+  if(D.days.length>=4) return cb();
+  const msg='Вы выбрали '+D.days.length+' дн. Для письма, формы и аккредитации нужно минимум 4 дня. Всё равно отправить?';
+  if(tg&&tg.showConfirm){ try{ tg.showConfirm(msg,ok=>{ if(ok) cb(); }); return; }catch(e){} }
+  if(confirm(msg)) cb();
+}
+function closeApp(){ if(tg) tg.close(); }
+
+/* ---------- связь с n8n ---------- */
+async function api(action,payload){
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({action:action,initData:tg?tg.initData:''},payload||{}))});
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  return res.json();
+}
+async function submit(isNew){
+  if(saving) return; saving=true; render();
+  try{
+    const out=Object.assign({},D);
+    const r=await api('save',{data:out});
+    if(!r||!r.ok) throw new Error((r&&r.error)||'save failed');
+    registered=true; saving=false; haptic('success');
+    if(isNew){ view='done'; render(); }
+    else { view='menu'; render(); toast('Изменения сохранены'); }
+  }catch(e){
+    saving=false; render(); haptic('error');
+    if(tg&&tg.showAlert){ try{ tg.showAlert('Не получилось отправить. Проверьте интернет и попробуйте ещё раз.'); return; }catch(_){} }
+    alert('Не получилось отправить. Проверьте интернет и попробуйте ещё раз.');
+  }
+}
+async function init(){
+  if(!tg || !tg.initData){ view='nottg'; render(); return; }
+  if(!API){ view='error'; render(); return; }
+  view='loading'; render();
+  try{
+    const r=await api('load');
+    if(r && r.ok && r.found && r.data){
+      D=Object.assign(emptyData(),r.data);
+      ['langs','positions','days'].forEach(k=>{ if(!Array.isArray(D[k])) D[k]=[]; });
+      if(!D.langLevel||typeof D.langLevel!=='object') D.langLevel={};
+      D.consent=true; registered=true; view='menu';
+    } else {
+      registered=false; view='wizard'; step=1;
+    }
+    render();
+  }catch(e){ view='error'; render(); }
+}
+
+if(tg){
+  tg.ready(); tg.expand();
+  try{ tg.setHeaderColor('#FFFFFF'); tg.setBackgroundColor('#F3F4F7'); }catch(e){}
+}
+init();
+</script>
+</body>
+</html>
